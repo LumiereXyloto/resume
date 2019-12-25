@@ -1,69 +1,77 @@
-const path = require('path');
-const { WebPlugin } = require('web-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+/* webpack.config.js
+ * @ Cong Min
+ */
+// const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-
+const path = require('path');
 
 module.exports = {
-  output: {
-    publicPath: '',
-    filename: '[name].js',
-  },
-  resolve: {
-    // 加快搜索速度
-    modules: [path.resolve(__dirname, 'node_modules')],
-    // es tree-shaking
-    mainFields: ['jsnext:main', 'browser', 'main'],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.scss$/,
-        // 提取出css
-        loaders: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: ['css-loader', 'sass-loader']
-        }),
-        include: path.resolve(__dirname, 'src')
-      },
-      {
-        test: /\.css$/,
-        // 提取出css
-        loaders: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: ['css-loader'],
-        }),
-      },
-      {
-        test: /\.(gif|png|jpe?g|eot|woff|ttf|svg|pdf)$/,
-        loader: 'base64-inline-loader',
-      },
-    ]
-  },
-  entry: {
-    main: './src/main.js',
-  },
-  plugins: [
-    new WebPlugin({
-      template: './src/index.html',
-      filename: 'index.html',
-    }),
-    new ExtractTextPlugin({
-      filename: '[name].css',
-      allChunks: true,
-    }),
-    new HtmlWebpackPlugin({
-      title: 'hello webpack',
-      template:'src/index.html',　　//为新生成的index.html指定模版
-      minify:{ //压缩HTML文件
-          removeComments:true,    //移除HTML中的注释
-          collapseWhitespace:true    //删除空白符与换行符
-      }
-    })
-  ],
-  devtool: 'source-map',
-  devServer: {
-    hot: true,
-    contentBase: './dist'
-  }
+    entry: {
+        app: ['./src/entry.js']
+    },
+    output: {
+        filename: 'static/[name].js?[hash:6]',
+        path: path.resolve(__dirname)
+    },
+    devServer: {
+        contentBase: path.resolve(__dirname)
+    },
+    plugins: [
+        // new webpack.HotModuleReplacementPlugin(),
+        new HtmlWebpackPlugin({
+            template: './src/index.html',
+            filename: 'index.html',
+            inject: 'head',
+            minify: {
+                collapseWhitespace: true,
+                minifyJS: true,
+                minifyCSS: true
+            }
+        })
+    ],
+    module: {
+        rules: [
+            {
+                test: /\.html$/,
+                use: 'html-loader'
+            },
+            {
+                test: /\.(less|css)$/,
+                use: [
+                    { loader: 'style-loader' },
+                    { loader: 'css-loader' },
+                    { loader: 'postcss-loader' },
+                    { loader: 'less-loader?compress' }
+                ]
+            },
+            {
+                test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192,
+                            name: 'static/[name].[ext]?[hash:6]'
+                        }
+                    },
+                    { // 压缩图片：https://github.com/tcoopman/image-webpack-loader
+                        loader: 'image-webpack-loader',
+                        options: {
+                            bypassOnDebug: true
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+                use: {
+                    loader: 'url-loader',
+                    options: {
+                        limit: 8192,
+                        name: 'static/[name].[ext]?[hash:6]'
+                    }
+                }
+            }
+        ]
+    }
 };
